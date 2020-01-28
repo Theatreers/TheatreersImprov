@@ -34,15 +34,21 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: website
-    - uses: lauchacarro/Azure-Storage-Action@master
-      with:
-        enabled-static-website: 'true'
-        folder: 'website'
-        connection-string: ${{ secrets.CONNECTION_STRING }}
+    #- uses: lauchacarro/Azure-Storage-Action@master
+    #  with:
+    #    enabled-static-website: 'true'
+    #    folder: 'website'
+    #    connection-string: ${{ secrets.CONNECTION_STRING }}
     - name: Azure Login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
+          az storage blob upload-batch -d "$web" --account-name "theatreers" -s "website"
     - name: Azure CLI script
       uses: azure/CLI@v1
       with:
