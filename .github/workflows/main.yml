@@ -34,11 +34,6 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: website
-    #- uses: lauchacarro/Azure-Storage-Action@master
-    #  with:
-    #    enabled-static-website: 'true'
-    #    folder: 'website'
-    #    connection-string: ${{ secrets.CONNECTION_STRING }}
     - name: Azure Login
       uses: azure/login@v1
       with:
