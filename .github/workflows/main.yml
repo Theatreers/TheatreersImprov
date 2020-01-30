@@ -37,11 +37,7 @@ jobs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}    
-    - name: output secret
-      shell: bash
-      run: |
-        echo ${{ secrets.AZURE_CREDENTIALS }}  
+        creds: ${{ secrets.AZURE_CREDENTIALS }}     
     - name: Azure CLI script
       uses: azure/CLI@v1
       with:
