@@ -1,0 +1,64 @@
+name: CI
+#on: 
+#  push:
+#      branches:
+#        - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:            
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=  
+    - name: Setup Hugo
+      uses: peaceiris/actions-hugo@v2
+      with:
+        hugo-version: '0.62.2'
+        # extended: true
+    - name: Build
+      run: hugo --minify    
+    - name: Upload website as Artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: website
+        path: /home/runner/work/TheatreersImprov/TheatreersImprov/public
+  publish:    
+    strategy:
+      matrix:        
+        key: [europe, states, australia]
+        include:
+          - key: europe
+            region: "North Europe"
+            abbreviation: "neu"
+          - key: states
+            region: "West US 2"
+            abbreviation: "wus2"
+          - key: australia
+            region: "Australia Central"
+            abbreviation: "ausc"
+    runs-on: ubuntu-latest
+    needs: build
+    steps:    
+    - name: Download website changes
+      uses: actions/download-artifact@v1
+      with:
+        name: website
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}  
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
+          az storage account create --name theatreers${{ matrix.abbreviation }} --resource-group 'theatreers' --sku 'Standard_RAGRS' --location '${{ matrix.region }}'
+          az storage blob service-properties update --account-name theatreers${{ matrix.abbreviation }} --static-website --404-document 404.html --index-document index.html
+          az storage container set-permission --name $web --account-name theatreers${{ matrix.abbreviation }} --public-access blob
+          az storage blob upload-batch --account-name theatreers${{ matrix.abbreviation }} -d '$web' -s website
+          az network traffic-manager endpoint create --name theatreers${{ matrix.abbreviation}} --profile-name theatreers --resource-group theatreers --type externalEndpoints
+          az cdn endpoint purge --content-paths  "/*" --profile-name "theatreers-cdn" --name "theatreers" --resource-group "theatreers"
