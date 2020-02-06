@@ -27,19 +27,6 @@ jobs:
         name: website
         path: 'public'
   publish:    
-    strategy:
-      matrix:        
-        key: [europe, states, australia]
-        include:
-          - key: europe
-            region: "North Europe"
-            abbreviation: "neu"
-          - key: states
-            region: "West US 2"
-            abbreviation: "wus2"
-          - key: australia
-            region: "Australia Central"
-            abbreviation: "ausc"
     runs-on: ubuntu-latest
     needs: build
     steps:    
@@ -56,7 +43,7 @@ jobs:
       with:
         azcliversion: 2.0.72
         inlineScript: |
-          az storage blob upload-batch --account-name theatreers${{ matrix.abbreviation }} -d '$web' -s website
+          az storage blob upload-batch --account-name theatreers -d '$web' -s website
     - name: Azure CLI script
       uses: azure/CLI@v1
       with:
